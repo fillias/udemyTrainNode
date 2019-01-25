@@ -1,0 +1,10 @@
+const express = require('express');
+const router = express.Router();
+
+/* importnem adminData  */
+const productsController = require( '../controllers/products' );
+
+
+router.get('/', productsController.getProducts);
+
+module.exports = router;

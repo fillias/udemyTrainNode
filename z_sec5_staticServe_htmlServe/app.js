@@ -11,11 +11,13 @@ app.use(bodyParser.urlencoded( {extended: false} ));
 
 /* staticky servirovane fajly jako css - ne handlovany express routerem, ale primo volane z file systemu 
 ** pouzijem middleware express.static(), kteremu jako argument dame cestu do folderu ze ktereho muze read only servirovat
-** express vezme jakykoliv request co se snazi najit nejaky file a nasmeruje ho do public folderu
+** express vezme jakykoliv request co se snazi najit nejaky file napr .js .css  a nasmeruje ho do public folderu
 */
 app.use(express.static( path.join(__dirname, 'public') ) );
 
+/* pokud je v ceste neco stejeho, napr .../admin/.../ lze to pouzit zde a ne pokazde v tom modulu adminroutes */
 app.use('/admin', adminRoutes);
+
 app.use(shopRoutes);
 
 
