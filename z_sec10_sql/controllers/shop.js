@@ -2,14 +2,15 @@ const Product = require('../models/product');
 const Cart = require('../models/cart');
 
 exports.getProducts = (req, res, next) => {
-    /* sequelize findAll method */
-    Product.findAll().then(products => {
+    /* destructuring = rovnou vezmem z array odpovedi */
+    Product.fetchAll().then(([rows, metadata]) => {
+        //console.log(rows);
         res.render('shop/product-list', {
-            prods: products,
+            prods: rows,
             pageTitle: 'All Products',
             path: '/products'
         });
-    }).catch(err => console.log('FindAll v shop - getProducts err:', err));
+    }).catch((err) => console.log('FetchAll v shop - getProducts err:', err));
 };
 
 
@@ -18,39 +19,59 @@ exports.getProducts = (req, res, next) => {
  ** express to umoznuje pridanim dvojtecky a promenne za cestu - viz routes
  ** (router.get('/products/:productId', ...)
  ** promennou lze pak pouzit, je v req.params[promenna]
- */
+ ** fce findById je static v models, prvni arg je id a druhy arg je callback ktery s nim zavola  */
 exports.getProduct = (req, res, next) => {
     const prodId = req.params.productId;
-
-    /* sequelize findbyId method */
-    /* nebo lze pouzit findAll({where:{id:prodId}}) -- pozor toto vraci array s vysledky */
-    Product.findById(prodId).then(product => {
+    /* v then descructuring - prvni polozka v array je ten produkt */
+    Product.findById(prodId).then( ([product]) => {
         res.render('shop/product-detail', {
-            product: product,
+            /* product se vraci jako array */
+            //console.log(product);
+            product: product[0],
             pageTitle: product.title,
             path: '/products'
         });
-    }).catch(err => console.log('FindAll v shop - getProduct err:', err));
-    
+    }).catch((err) => console.log('FetchAll v shop - getProduct err:', err));
 };
 
 
 /* index page */
 exports.getIndex = (req, res, next) => {
-    /* sequelize findAll method */
-    Product.findAll().then(products => {
+
+    /* destructuring = rovnou vezmem z array odpovedi */
+    Product.fetchAll().then(([rows, metadata]) => {
+        //console.log(rows);
         res.render('shop/index', {
-            prods: products,
+            prods: rows,
             pageTitle: 'homepage',
             path: '/'
         });
-    }).catch(err => console.log('FindAll v shop - getIndex err:', err));
+        //
+    }).catch(err => console.log('FetchAll v shop - getIndex err:', err));
 };
 
 
 
 /* getCart page */
+/* cart je ve formatu: {products:[{id:0.8422633300700371, qty:8},{id:0.12411838720031687, qty:1},{id:0.7359865105494563, qty:1}], totalPrice:1731} */
+/* products je ve formatu [{"id":"123","title":"kok","imageUrl":"http://URL","description":"","price":"111"},{"id":"456","title":"222","imageUrl":"http://URL","description":"","price":"222"}]  */
+/* v cart.ejs se ocekava products a v nich p.productData.id p.productData.title a p.qty 
+    products = [ 
+        {productData: {
+                id: 123,
+                title: 'titulek'
+                },
+        qty: 1
+        },
+        {productData: {
+                id: 456,
+                title: 'hhh'
+                },
+        qty: 2
+        },
 
+    ]
+*/
 exports.getCart = (req, res, next) => {
     Cart.getCart(cart => {
         Product.fetchAll(products => {

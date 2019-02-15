@@ -11,16 +11,27 @@ exports.getAddProduct = (req, res, next) => {
 
 /* postAddProduct page */
 exports.postAddProduct = (req, res, next) => {
-    // console.log('postAddProduct req.body:', req.body);
-    /* u noveho produktu prvni argument null (to je id) */
 
     const title = req.body.title;
     const imageUrl = req.body.imageUrl;
     const price = req.body.price;
     const description = req.body.description;
-    const product = new Product(null, title, imageUrl, description, price);
-    product.save();
-    res.redirect('/');
+
+    /* sequelize - Product 
+    create - hned to ulozi do db
+    id se dela automaticky
+    sequelize pracuje s promisema
+    */
+
+    Product.create({
+        title: title,
+        price: price,
+        imageUrl: imageUrl,
+        description: description
+    }).then(result => {
+        res.redirect('/admin/products');
+    }).catch(err => console.log('admin > postAddProduct err: ', err));
+
 };
 
 
@@ -33,7 +44,10 @@ exports.getEditProduct = (req, res, next) => {
         return res.redirect('/');
     }
     const prodId = req.params.productId;
-    Product.findById(prodId, product => {
+
+    /* sequelize findbyId method */
+    /* nebo lze pouzit findAll({where:{id:prodId}}) -- pozor toto vraci array s vysledky */
+    Product.findById(prodId).then(product => {
         if (!product) {
             return res.redirect('/');
         }
@@ -43,7 +57,7 @@ exports.getEditProduct = (req, res, next) => {
             editing: editMode,
             product: product
         });
-    });
+    }).catch(err => console.log('FindAll v shop - getEditProduct err:', err));
 };
 
 exports.postEditProduct = (req, res, next) => {
@@ -59,25 +73,53 @@ exports.postEditProduct = (req, res, next) => {
         updatedDesc,
         updatedPrice
     );
-    /* sejvni produkt, save se postara o update nebo save noveho podle toho jestli ma productId  */
-    updatedProduct.save();
-    res.redirect('/admin/products');
+    /* sejvni produkt, - nejdriv mrkni jestli tam je  */
+    Product.findById(prodId).then( product => {
+        /* toto jeste nemeni data v databazi */
+        product.title = updatedTitle;
+        product.price = updatedPrice;
+        product.imageUrl = updatedImageUrl;
+        product.description = updatedDesc;
+
+        /* sequelize metoda save() ulozi ten produkt do db 
+        ** pokud v db neexistuje, vytvori novy, pokude existuje updatne ho
+        ** vraci promisu, tak abychom mohli chainovat dalsi then() 
+        ** a na konci catchnout catch() je treba ho vratit - return 
+        ** tedu ne jen  product.save(); ale return product.save();
+        */
+       return product.save();
+    }).then(result => {
+        console.log('product '+ prodId +' updated');
+        /* redirect az se sejvne do db aby se to propsalo do admin/products 
+        ** error handling poresime pozdeji v lekci
+        */
+        res.redirect('/admin/products');
+    }).catch(err => console.log('admin postEditProduct err:', err));
 };
 
 
 /* getProducts page */
 exports.getProducts = (req, res, next) => {
-    Product.fetchAll(products => {
+
+    /* sequelize findAll method */
+    Product.findAll().then(products => {
         res.render('admin/products', {
             prods: products,
             pageTitle: 'Admin Products',
             path: '/admin/products'
         });
-    });
+    }).catch(err => console.log('FindAll v Admin - getProducts err:', err));
+
+
 };
 
 exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.deleteById(prodId);
-    res.redirect('/admin/products');
+    Product.findById(prodId).then(product => {
+        /* sequelize destroy smaze zaznam */
+        return product.destroy(product);
+    }).then(result => {
+        res.redirect('/admin/products');
+    }).catch(err => console.log('Admin - postDeleteProduct err:', err));;
+    
 };
