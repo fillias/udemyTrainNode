@@ -18,5 +18,3 @@ npm install --save sequelize
 
 ---
 
-todo relations, associations sql - 
-pokracovat u sec11 udnerstanding sequelize, video 157
