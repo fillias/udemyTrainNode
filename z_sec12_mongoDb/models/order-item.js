@@ -1,14 +1,9 @@
 const Sequelize = require('sequelize');
 const sequelize = require('../util/database');
 
-/* v sequelize nejdriv definujeme model tabulky
-** docka je sequelize.com
-  
-Je to Many to many relationship
-propojovaci tabulka mezi cart a product
-
+/* propojovaci tabulka mezi order a products
 */
-const CartItem = sequelize.define('cartItem', {
+const OrderItem = sequelize.define('orderItem', {
     id: {
         type: Sequelize.INTEGER,
         autoIncrement: true,
@@ -18,4 +13,4 @@ const CartItem = sequelize.define('cartItem', {
     quantity: Sequelize.INTEGER
 });
 
-module.exports = CartItem;
+module.exports = OrderItem;

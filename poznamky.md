@@ -14,7 +14,18 @@ npm install --save mysql2
 
 sequelize - 3rd party balicek co se stara o SQL dotazy, umoznuje pracovat primo v js objects a resi relace mezi tabulkami atd. 
 npm install --save sequelize
-
+desktop appka pro db management je mysql workbench
 
 ---
 
+mongoDB
+
+instal mongoDB:
+- bud lze instalovat lokalne (mongo DB community server)
+nebo pouzit cloud (je to free) - Atlas
+mongo je treba na webu nakonfigurovat, vytvorit cluster, user pass atd
+
+pro mongo se pouziva driver npm install --save mongodb
+
+desktop appka pro db management je compass
+https://www.mongodb.com/products/compass
