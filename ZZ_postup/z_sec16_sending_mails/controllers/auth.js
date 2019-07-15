@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const fs = require('fs');
 
 // pro posilani mailu pres sendgrid
 const nodemailer = require('nodemailer');
@@ -6,11 +7,22 @@ const sendgridTransport = require('nodemailer-sendgrid-transport');
 
 // nodemaileru createTransport() je treba nastavit jak bude dorucovat maily 
 // nastavime mu sendgridTransport() ktera vrati konfiguraci kterou precte nodemailer
-const transporter = nodemailer.createTransport( sendgridTransport({
-  auth: {
-     api_key: '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'
-  }
-}) );
+
+
+
+let transporter;
+// API klic precteme ze souboru
+fs.readFile(".sendGridApikey", "utf8", function(err, key) {
+  //console.log('key:', key.trim());
+  //console.log('err:', err);
+  transporter = nodemailer.createTransport( sendgridTransport({
+    auth: {
+       api_key: key.trim()
+    }
+  }) );
+});
+
+
 
 
 // pouzijeme bcryptjs pro zahashovani hesel
@@ -125,8 +137,11 @@ exports.postSignup = (req, res, next) => {
       })
       .then(result => {
         res.redirect('/login');
-        // pop redirectu posleme email uzivateli
+        // po redirectu posleme email uzivateli 
+
         // transporter vraci promisu
+        // u largescale app by e to spis melo resit nejakym serverside scriptem
+        // ktery posle jednou za case emaily nove registrovanym
         return transporter.sendMail({
           to: email,
           // from musi byt email adresa
@@ -134,6 +149,9 @@ exports.postSignup = (req, res, next) => {
           subject: ' Signupt succeeded',
           // html je telo emailu
           html: '<h4>zaregistrovano</h4>'
+        })
+        .then(result => {
+          console.log(result);
         });
         
       });
