@@ -15,6 +15,11 @@ const userSchema = new Schema({
     type: String,
     required: true
   },
+
+  // toto slouzi pro reset hesla pomoci mailu
+  resetToken: String,
+  resetTokenExpiration: Date,
+    
   cart: {
     /* to jak ma vypadat cart muzeme definovat rovnou tady 
      ** pro typ productId muzeme pouzit metody mongoose
