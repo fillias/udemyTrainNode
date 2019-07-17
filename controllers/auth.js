@@ -1,5 +1,4 @@
 const User = require('../models/user');
-const fs = require('fs');
 const crypto = require('crypto');
 
 // pro posilani mailu pres sendgrid
@@ -12,17 +11,13 @@ const sendgridTransport = require('nodemailer-sendgrid-transport');
 
 
 let transporter;
-// API klic precteme ze souboru
-fs.readFile(".sendGridApikey", "utf8", function(err, key) {
-  //console.log('key:', key.trim());
-  //console.log('err:', err);
-  transporter = nodemailer.createTransport( sendgridTransport({
-    auth: {
-       api_key: key.trim()
-    }
-  }) );
-});
+// API klic precist z environment variable
 
+transporter = nodemailer.createTransport( sendgridTransport({
+  auth: {
+      api_key: process.env.SENDGRID_API_KEY
+  }
+}) );
 
 
 
