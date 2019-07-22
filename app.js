@@ -3,7 +3,7 @@ const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const MONGODB_URI = 'mongodb+srv://fillias:vcosCilhCtMgstAm@cluster0-purr1.mongodb.net/shop?retryWrites=true';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const errorController = require('./controllers/error');
 
