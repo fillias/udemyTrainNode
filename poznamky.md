@@ -58,3 +58,7 @@ sendgrid.com
 pro posialni mailu pouzijeme balicky nodemailer --pouziva se pro posilani mailu v node
 a nodemailer-sendgrid-transport -- propojeni nodemailer a sendgrid
 npm install --save nodemailer nodemailer-sendgrid-transport 
+
+------
+express-validator je validator pro validaci formularu apod serverside
+npm install --save express-validator
