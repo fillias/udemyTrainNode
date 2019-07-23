@@ -94,6 +94,7 @@ app.use( (req, res, next) => {
     }
     
    User.findById(req.session.user._id).then(user => {
+       throw new Error('baf');
         if (!user) { // do req. user pridat pokud ho fakt najdu
             return next();
         }
