@@ -7,8 +7,6 @@ const MONGODB_URI = process.env.MONGODB_URI;
 
 const errorController = require('./controllers/error');
 
-const multer = require('multer');
-
 // CSRF ochrana formularu pomoci tokenu
 const csrf = require('csurf');
 
@@ -40,60 +38,8 @@ const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
-
 app.use(bodyParser.urlencoded({ extended: false }));
-
-
-// multer je middleware ktery se podiva do kazdeho requestu jestli je to multipart form data
-// a pokud to tak je tak se pokusi ty data extractnout
-// single mu rekne ze je to jen jeden file a 'image' je ten input name ktery ma hledat
-// multer bere options v {}, ,kde 'dest' je folder kam to ma uploadnout
-// v defaultu tomu uploadlemu binary data da nejaky random hash name
-// lepsi je pouzit multer 'diskStorage' ktery se preda jako storage
-
-const fileStorage = multer.diskStorage({
-    // diskstorage ma object s dvemi funkcemi ktere zavola pro incoming file 
-    destination: (req, file, cb) => {
-        // callback se zavola jakmile je hotovo
-        // u cb() je prvni argument chyba, pokud neni tak ze zada null
-        // druhy argument je misto kam ma file ulozit
-        cb(null, 'images');
-    },
-    filename: (req, file, cb) => {
-        // druhy argument je jmeno souboru jak to ma nazvat
-        // file obsahuje 'originalname' coz je jmeno co to ma od uzivatele vcetne pripony
-        // coz se da pouzit napr. takto aby se neprepsal soubor kdyby se jmeno shodovalo
-        cb(null, new Date().toISOString() + '_' + file.originalname );
-    }
-});
-
-// filefilter umoznuje konfigurovat co chceme ukladat
-const fileFilter = (req, file, cb) => {
-    //console.log(file);
-    
-    // cb(null, true) -- zavolat pokud soubor chceme ulozit
-    // cb(null, false) -- zavolat pokud soubor nechceme ulozit
-    if (file.mimetype === 'image/png' || file.mimetipe === 'image/jpeg' || file.mimetipe === 'image/jpg') {
-        cb(null, true);
-    } else {
-        cb(null, false);
-    }
-}
-
-app.use(multer({
-  //  dest: 'images'
-  storage: fileStorage,
-  fileFilter: fileFilter
-}).single('image'));
-
-// static znamena ze requesty na files z definovane routy a folderu budou automaticky vydany (vsem)
-// expressu rikame: "serve files in that folder jako by byly v root folderu"
 app.use(express.static(path.join(__dirname, 'public')));
-
-// pokud maji cestu jinou, uvedem ji
-// jestli mame request co zacina "/images" pak serviruj tyhle files staticly
-// '/images' je ten folder ktery chceme tohle servirovat
-app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.use(session({
     // props pro session, minimalne nastavit toto:
@@ -148,6 +94,7 @@ app.use( (req, res, next) => {
     }
     
    User.findById(req.session.user._id).then(user => {
+       throw new Error('baf');
         if (!user) { // do req. user pridat pokud ho fakt najdu
             return next();
         }
