@@ -1,0 +1,22 @@
+<section class="pagination">
+    <%  if (page > 1) { %>
+        <a href="/?page=<%=1%>">prvni</a>
+        <a href="/?page=<%= page === 1 ? '1' : page - 1 %>">&lt;&lt;</a>
+    <% } %>
+    
+
+    <% if (page != 1 ) { %>
+        <a href="/?page=<%=page-1%>"><%=page-1%></a>
+    <% } %>
+        <a class="active" href="/?page=<%=page%>"><%=page%></a>
+
+    <% if (page != numberOfPages ) { %>
+        <a href="/?page=<%=page+1%>"><%=page+1%></a>
+    <% } %>
+
+    <% if (page < numberOfPages) { %>
+        <a href="/?page=<%= page === numberOfPages ? page : page + 1 %>">&gt;&gt;</a>
+        <a href="/?page=<%=numberOfPages%>">posledni</a>
+    <% } %>
+
+</section>
