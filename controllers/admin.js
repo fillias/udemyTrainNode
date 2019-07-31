@@ -260,8 +260,10 @@ exports.getProducts = (req, res, next) => {
            });
 };
 
-exports.postDeleteProduct = (req, res, next) => {
-    const prodId = req.body.productId;
+exports.deleteProduct = (req, res, next) => {
+    //return res.status(200).json({message: "success"});
+    // DELETE reuqests nemaj body, productId predame v params
+    const prodId = req.params.productId;
 
     /* findByIdAndRemove je mongoose metoda 
     useFindAndModify: false pridano do options jinak mongoose hlasil deppreciaton warning
@@ -280,13 +282,20 @@ exports.postDeleteProduct = (req, res, next) => {
             return Product.deleteOne({_id: prodId, userId: req.user._id});
         }
     })
-    .then(result => {       
-        res.redirect('/admin/products');
+    .then(result => {     
+        // v response misto redirectu posleme json data (express metoda)
+        //res.redirect('/admin/products');
+        // taky posleme status 200, uz neredirectujem tak se neda automaticky
+        // json() zkonvertuje js object do JSON
+        res.status(200).json({message: "success"});  
+        
     })
     .catch(err => {
-        const error = new Error(err);
-        error.httpStatusCode = 500;
-        return next(error);
+        //error taky resime jinak
+        // const error = new Error(err);
+        // error.httpStatusCode = 500;
+        // return next(error);
+        res.status(500).json({message: "deleting product failed"});
     });;
     
 };

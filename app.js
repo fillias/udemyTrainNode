@@ -125,6 +125,7 @@ app.use( (req, res, next) => {
 
     // v kazdem POST formulari pak musi byt ten csrf Token uveden, name musi byt "_csrf"
     // <input type="hidden" name="_csrf" value="<%= csrfToken %>"> 
+    // csurf package se pro token diva do body, do query a do headers
     res.locals.csrfToken = req.csrfToken();   
     next();        
 } );

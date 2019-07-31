@@ -30,7 +30,11 @@
                     </article>
                 <% } %>
             </div>
-            <%- include('../includes/pagination.ejs', {page: page, numberOfPages: numberOfPages}) %>
+            <%- include('../includes/pagination.ejs', {
+                        page: page, 
+                        numberOfPages: numberOfPages,
+                        admin: false
+                        }) %>
         <% } else { %>
             <h1>No Products Found!</h1>
         <% } %>

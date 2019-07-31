@@ -28,20 +28,25 @@
                                 </div>
                                 <div class="card__actions">
                                     <a href="/admin/edit-product/<%= product._id %>?edit=true" class="btn">Edit</a>
-                                    <form action="/admin/delete-product" method="POST">
+                                        <!-- smazani poresime client-side -->
                                         <input type="hidden" value="<%= product._id %>" name="productId">
                                         <% /* pridame csrf token musi mit name="_csrf" */ %>
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>"></input>
-                                        <button class="btn" type="submit">Delete</button>
-                                    </form>
+                                        <button class="btn" onclick="deleteProduct(this)">Delete</button>
+                                    
 
                                 </div>
                             </article>
                             <% } %>
                     </div>
-                    <%- include('../includes/pagination.ejs', {page: page, numberOfPages: numberOfPages}) %>
+                    <%- include('../includes/pagination.ejs', {
+                        page: page, 
+                        numberOfPages: numberOfPages,
+                        admin: true
+                        }) %>
                     <% } else { %>
                         <h1>No Products Found!</h1>
                         <% } %>
             </main>
             <%- include('../includes/end.ejs') %>
+            <script src="/js/admin.js"></script>
