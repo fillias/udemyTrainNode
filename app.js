@@ -113,6 +113,8 @@ app.use(session({
 app.use(flash());
 
 // po tom co inicializujeme session (csurf ji pouziva pridame middleware )
+// pokud potrebujeme neco excludovat (napr stripe vytvari vlastni form requesty z iframes)
+// tak excluded routy dat zde pred app.use(csrfProtection);
 app.use(csrfProtection);
 
 
@@ -180,7 +182,7 @@ app.use(errorController.get404);  // sem
 app.use( (error, req, res, next) => {
   //muzeme pouzit treba custom metody v error objectu:  
    // res.status(error.httpStatusCode).render(...)
-
+    console.log('----- error handler error: -----');
     console.log(error);
     res.status(500).render('500', {
         pageTitle: '500 error',

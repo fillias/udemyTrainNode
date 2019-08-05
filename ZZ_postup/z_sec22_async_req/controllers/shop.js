@@ -202,55 +202,66 @@ exports.postCartDeleteProduct = (req, res, next) => {
 };
 
 
-// stripe 3rd party pro placeni
-const stripe = require('stripe')('sk_test_BMD9aaviqJzK0hlROg2KMRbD');
 exports.postOrder = (req, res, next) => {
-    // Token is created using Checkout or Elements!
-    // Get the payment token ID submitted by the form:
-    const token = req.body.stripeToken; // Using Express
-    let totalSum = 0;
-  
+    //console.log(req.user.cart.items);
     req.user
-      .populate('cart.items.productId')
-      .execPopulate()
-      .then(user => {  
-        user.cart.items.forEach(p => {
-          totalSum += p.quantity * p.productId.price;
+        .populate('cart.items.productId')
+        .execPopulate()
+        .then(user => {
+            // console.log(user.cart.items);
+            const order = new Order({
+                user: {
+                    email: req.user.email,
+                    userId: req.user
+                },
+                products: user.cart.items.map(item => {
+                    //console.log(item);
+                    return {
+                        // product: item.productId  --- takto to tam neda vsechny key/values toho objektu
+                        // ale pouze _id. muzeme pouzit spread na ...item.productId 
+                        // to by tam ale narvalo vsechny ty metody apod co mongoose ma, tak pouzit 
+                        // mongoose '_doc' ktery vrati jen ty nase data
+                        product: {
+                            ...item.productId._doc
+                        },
+                        quantity: item.quantity
+                    }
+                })
+            });
+            // console.log(order);
+            return order.save();
+        })
+        .then(result => {
+            return req.user.clearCart();
+        })
+        .then(result => {
+            return res.redirect('/orders');
+        })
+        .catch(err => {
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
         });
-  
-        const products = user.cart.items.map(i => {
-          return { quantity: i.quantity, product: { ...i.productId._doc } };
-        });
-        const order = new Order({
-          user: {
-            email: req.user.email,
-            userId: req.user
-          },
-          products: products
-        });
-        return order.save();
-      })
-      .then(result => {
-          // toto vytvori request do stripe a udela tu platbu
-          // delat na BE aby to nikdo nemohl zneuzit
-        const charge = stripe.charges.create({
-          amount: totalSum * 100,
-          currency: 'usd',
-          description: 'Demo Order',
-          source: token,
-          metadata: { order_id: result._id.toString() }
-        });
-        return req.user.clearCart();
-      })
-      .then(() => {
-        res.redirect('/orders');
-      })
-      .catch(err => {
-        const error = new Error(err);
-        error.httpStatusCode = 500;
-        return next(error);
-      });
-  };
+
+    // products: [{
+    //     product: {type: Object, required: true},
+    //     quantity: {type: Number, required: true}
+    //   }],
+
+    // [{
+    //     "_id": "5d120066301d8a3f46bbccf2",
+    //     "productId": {
+    //         "_id": "5d12004d301d8a3f46bbccf1",
+    //         "title": "pro test edited",
+    //         "imageUrl": "https://cdn.xsd.cz/resize/0a2b582b6123325381a7bf8eb92fb5b9_extract=0,545,645,430_resize=322,215_.jpg?hash=f02087a13caef5018dfa7cbb894dca85",
+    //         "price": 777,
+    //         "description": "jjj",
+    //         "userId": "5d11fb2bca15f63e6b0f3397",
+    //         "__v": 0
+    //     },
+    //     "quantity": 1
+    // }]
+}
 
 /* getOrders page */
 exports.getOrders = (req, res, next) => {
@@ -368,30 +379,3 @@ exports.getInvoice = (req, res, next) => {
         });
 
 }
-
-
-exports.getCheckout = (req, res, next) => {
-
-    req.user
-    .populate('cart.items.productId')
-    .execPopulate()
-    .then(user => {
-        const products = user.cart.items;
-        let total = 0;
-        products.forEach(p => {
-            total += p.quantity * p.productId.price;
-        })
-
-        res.render('shop/checkout', {
-            path: '/checkout',
-            pageTitle: 'checkout',
-            products: products,
-            totalSum: total
-        });
-    }).catch(err => {
-        const error = new Error(err);
-        error.httpStatusCode = 500;
-        return next(error);
-    });
-
-};

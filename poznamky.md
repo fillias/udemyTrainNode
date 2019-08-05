@@ -74,3 +74,9 @@ npm install --save multer
 
 pdfkit - vytvareni pdf
 npm install --save pdfkit
+
+
+-------- 
+
+payment
+Stripe - 3rd party pro outsorcovani reseni plateb
