@@ -1,0 +1,7 @@
+<form action="/cart" method="POST">
+<button class="btn" type="submit">Add to Cart</button>
+<!-- v POST requestu muzu davat do body requestu informace jdou s tim form
+pridam tedy skryty input kde predam productId
+-->
+<input type="hidden" name="productId" value="<%= product.id %>">
+</form>
