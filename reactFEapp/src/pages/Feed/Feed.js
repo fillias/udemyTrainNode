@@ -50,7 +50,11 @@ class Feed extends Component {
       page--;
       this.setState({ postPage: page });
     }
-    fetch('http://192.168.56.102:8080/feed/posts')
+    fetch('http://192.168.56.102:8080/feed/posts?page=' + page, {
+      headers: {
+       Authorization: 'Bearer ' + this.props.token
+      }
+    })
       .then(res => {
         if (res.status !== 200) {
           throw new Error('Failed to fetch posts.');
@@ -59,7 +63,12 @@ class Feed extends Component {
       })
       .then(resData => {
         this.setState({
-          posts: resData.posts,
+          posts: resData.posts.map(post => {
+            return {
+              ...post,
+              imagePath: post.imageUrl
+            };
+          }),
           totalPosts: resData.totalItems,
           postsLoading: false
         });
@@ -105,24 +114,23 @@ class Feed extends Component {
     this.setState({
       editLoading: true
     });
-    // Set up data (with image!)
-    let url = 'http://192.168.56.102:8080/feed/posts';
-    let method = 'POST'
+    const formData = new FormData();
+    formData.append('title', postData.title);
+    formData.append('content', postData.content);
+    formData.append('image', postData.image);
+    let url = 'http://192.168.56.102:8080/feed/post';
+    let method = 'POST';
     if (this.state.editPost) {
-      url = 'URL';
+      url = 'http://192.168.56.102:8080/feed/post/' + this.state.editPost._id;
+      method = 'PUT';
     }
-
-    console.log(postData);
 
     fetch(url, {
       method: method,
+      body: formData, 
       headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        title: postData.title,
-        content: postData.content
-      })
+        Authorization: 'Bearer ' + this.props.token
+      }   
     })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
@@ -131,9 +139,9 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
-        //console.log(resData);
+        console.log(resData);
         const post = {
-          _id: resData.post._id, 
+          _id: resData.post._id,
           title: resData.post.title,
           content: resData.post.content,
           creator: resData.post.creator,
@@ -174,7 +182,12 @@ class Feed extends Component {
 
   deletePostHandler = postId => {
     this.setState({ postsLoading: true });
-    fetch('URL')
+    fetch('http://192.168.56.102:8080/feed/post/' + postId,  {
+      method: 'DELETE',
+      headers: {
+        Authorization: 'Bearer ' + this.props.token
+      }
+    })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Deleting a post failed!');
@@ -253,7 +266,7 @@ class Feed extends Component {
                   key={post._id}
                   id={post._id}
                   author={post.creator.name}
-                  date={new Date(post.createdAt).toLocaleDateString('cs-CZ')}
+                  date={new Date(post.createdAt).toLocaleDateString('en-US')}
                   title={post.title}
                   image={post.imageUrl}
                   content={post.content}

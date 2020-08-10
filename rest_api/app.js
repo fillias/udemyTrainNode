@@ -3,13 +3,17 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const multer = require('multer');
+
 const MONGODB_URI = process.env.MONGODB_URI;
 /*  env variables jsou setnuty v app-env file
 pro precteni a setnuti ev variable pouzij
 source app-env
 */
+//console.log(MONGODB_URI);
 
 const feedRoutes = require('./routes/feed');
+const authRoutes = require('./routes/auth');
 
 // bodyparser inicializujeme s urlencoded
 
@@ -18,13 +22,69 @@ const feedRoutes = require('./routes/feed');
 // toto se hodi pro requesty z daty ktera jsou ve formatu x-www-urlencoded
 // app.use(bodyParser.urlencoded());
 
-// toto se hodi pro data s application/json headery
-app.use(bodyParser.json());
+app.use(bodyParser.json()); // application/json
 
-// requesty co zacinaji na /images serviruj staticly z folderu /images
-app.use('/images', express.static(path.join(__dirname, '/images')));
 
-app.use((req, res, next)=> { console.log('*** new request ***'); next(); });
+/* uploading images */
+// multer je middleware ktery se podiva do kazdeho requestu jestli je to multipart form data
+// a pokud to tak je tak se pokusi ty data extractnout
+// single mu rekne ze je to jen jeden file a 'image' je ten input name ktery ma hledat
+// multer bere options v {}, ,kde 'dest' je folder kam to ma uploadnout
+// v defaultu tomu uploadlemu binary data da nejaky random hash name
+// lepsi je pouzit multer 'diskStorage' ktery se preda jako storage
+// Multer adds a body object and a file or files object to the request object. 
+// The body object contains the values of the text fields of the form, 
+// the file or files object contains the files uploaded via the form.
+// https://expressjs.com/en/resources/middleware/multer.html
+
+const fileStorage = multer.diskStorage({
+    // diskstorage ma object s dvemi funkcemi ktere zavola pro incoming file 
+    destination: (req, file, cb) => {
+         // callback se zavola jakmile je hotovo
+        // u cb() je prvni argument chyba, pokud neni tak ze zada null
+        // druhy argument je misto kam ma file ulozit
+        cb(null, 'images');
+    },
+    filename: (req, file, cb) => {
+        // druhy argument je jmeno souboru jak to ma nazvat
+        // file obsahuje 'originalname' coz je jmeno co to ma od uzivatele vcetne pripony
+        // coz se da pouzit napr. takto aby se neprepsal soubor kdyby se jmeno shodovalo
+        cb(null, new Date().toISOString() + '-' + file.originalname);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    // filefilter umoznuje konfigurovat co chceme ukladat
+    if (
+        file.mimetype === 'image/png' ||
+        file.mimetype === 'image/jpg' ||
+        file.mimetype === 'image/jpeg'
+    ) {
+     //console.log(file);
+    
+    // cb(null, true) -- zavolat pokud soubor chceme ulozit
+    // cb(null, false) -- zavolat pokud soubor nechceme ulozi
+        cb(null, true);
+    } else {
+        cb(null, false);
+    }
+};
+
+
+app.use(
+    multer({
+        storage: fileStorage,
+        fileFilter: fileFilter
+    }).single('image')
+);
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
+
+
+app.use((req, res, next) => {
+    console.log('*** new request ***');
+    next();
+});
 
 // vyreseni CORS
 app.use((req, res, next) => {
@@ -45,24 +105,33 @@ app.use((req, res, next) => {
 // to co zacina v url na /feed tak posli pres feedRoutes
 app.use('/feed', feedRoutes);
 
+app.use('/auth', authRoutes);
+
+
 /* V MONGODB_URI definujeme i nazev databaze, tady je "restApi"
 ...cluster0-purr1.mongodb.net/restApi?retryWrites.... 
 */
 
 // global error handling
 app.use((err, req, res, next) => {
-   // console.log(err);
+    // console.log(err);
     const status = err.statusCode || 500;
     const message = err.message;
-    console.log(err.message);
-    res.status(status).json({message:message});
-   
+    console.log(err);
+    res.status(status).json({
+        message: message,
+        data: err.data
+    });
+
 });
 
-mongoose.connect(MONGODB_URI, { useNewUrlParser: true })
-.then(()=> {
-    console.log('===== app listen ====');
-    app.listen(8080);
-})
-.catch(e => console.log(e));
-
+mongoose.connect(MONGODB_URI, {
+        useNewUrlParser: true,
+        // useFindAndModify: false je neco kvuli deprecation warning v mongoose 
+        useFindAndModify: false
+    })
+    .then(() => {
+        console.log('===== app listen ====');
+        app.listen(8080);
+    })
+    .catch(e => console.log(e));

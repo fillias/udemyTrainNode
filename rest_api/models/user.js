@@ -3,31 +3,33 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 
-const postSchema = new Schema({
+const userSchema = new Schema({
   /* zadefinujeme klice a jejich datove typy */
-  title: {
+  email: {
     type: String,
     required: true
   },
-  content: {
+  password: {
     type: String,
     required: true
   },
-  imageUrl: {
+  name: {
     type: String,
     required: true
   },
-  creator: {
-      /* name je reference k userovi  - mame relaci k 'users' schema v DB */
+  status: {
+    type: String,
+    // kazdy nove zalozeny user bude startovat s timhle statusem
+    default: 'I am new'
+  },
+  posts: [{
+      // posts je array
+      // a kazdy object v array je type: Schema.Types.ObjectId s ref: 'Post'
+      // je to reference to Post model v db
       type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true  
-  }
+      ref: 'Post'
+  }]
 
-}, {
-  /* pri vytvareni Schema muzeme pridat nejaky options jako druhy argument */
-  /* timestamps -- mongoose vytvori timestamp kdykoliv je nova verze pridana do db */
-  timestamps: true
 });
 
 
@@ -39,4 +41,4 @@ const postSchema = new Schema({
 // -- mongoose tomu da maly pismeno na zacatku a mnozne cislo
 
 
-module.exports = mongoose.model('Post', postSchema);
+module.exports = mongoose.model('User', userSchema);

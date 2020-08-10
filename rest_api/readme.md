@@ -5,8 +5,11 @@ packages:
 
 express
 bodyparser
+mongoose,
+multer
+
+pro hashovani hesel balik bcryptjs
 
 dev packages:
 nodemon
 
-pro testovani API pouzut Postman
