@@ -10,7 +10,9 @@ const {
 
 const Post = require('../models/post');
 
-exports.getPosts = (req, res, next) => {
+/* ukazka prepsani na async await */
+
+exports.getPosts = async (req, res, next) => {
 
     // pagination
     const currentPage = req.query.page || 1;
@@ -19,57 +21,38 @@ exports.getPosts = (req, res, next) => {
     // kolik mame v db postu?
     let totalItems;
 
-    Post.find()
-        .countDocuments()
-        .then(count => {
-            totalItems = count;
-            // tady resime kolik vratime polozek - pagination
-            return Post.find()
-                // pokud je currentpage 1 tak neskipnu nic ( 0 * perPage )
-                // pokud je currentpage jakakoliv (napr 2), 
-                // skipnu vsechny ty dva itemy co byly na page 1 (1*2)
-                .skip((currentPage - 1) * perPage)
-                // a zde limitnu pocet items ktery vratim (2)
-                .limit(perPage);
-        })
-        .then(posts => {
-            // console.log(posts);
+    try {
+        /* await to zastavi dokud se nevrati promisa behind the scenes, 
+        Mongoose vraci promise-like object kde lze pouzit i try/catch nebo promise
+        pokud chci fakt aby to vratilo promisu (zde neni nutne) tak nakonec zavolat exec()
+        const count = await Post.find().countDocuments().exec(); 
+        */
+        const count = await Post.find().countDocuments();  
+        
+        totalItems = count;
+        // tady resime kolik vratime polozek - pagination
+
+        const posts =  await Post.find()
+            // pokud je currentpage 1 tak neskipnu nic ( 0 * perPage )
+            // pokud je currentpage jakakoliv (napr 2), 
+            // skipnu vsechny ty dva itemy co byly na page 1 (1*2)
+            .skip((currentPage - 1) * perPage)
+            // a zde limitnu pocet items ktery vratim (2)
+            .limit(perPage);
+
             res.status(200).json({
                 message: 'fetch posts success',
                 posts: posts,
                 // na fe je taky logika pagination
                 totalItems: totalItems
             });
-        })
-
-        .catch(err => {
-            if (!err.statusCode) {
-                err.statusCode = 500;
-            }
-            next(err);
-        });
-
-
-
-
-
-    // json je express metoda, vrati spravne hlavicky, zkonvertuje js object do json a posle
-    // status 200 = success
-    /*
-    res.status(200).json({
-        posts: [{
-            _id: '123',
-            title: 'titulek',
-            content: 'first post',
-            imageUrl: 'images/aa.png',
-            creator: {
-                name: 'filip'
-            },
-            createdAt: new Date()
-        }]
-    });
-    */
-
+    } catch (err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    }
+    
 }
 
 exports.createPost = (req, res, next) => {
