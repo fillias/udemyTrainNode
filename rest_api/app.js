@@ -12,8 +12,11 @@ source app-env
 */
 //console.log(MONGODB_URI);
 
-const feedRoutes = require('./routes/feed');
-const authRoutes = require('./routes/auth');
+
+/* graphQL */
+const { graphqlHTTP } = require('express-graphql');
+const graphQlSchema = require('./graphql/schema');
+const graphQlResolver = require('./graphql/resolvers');
 
 // bodyparser inicializujeme s urlencoded
 
@@ -102,11 +105,14 @@ app.use((req, res, next) => {
 });
 
 
-// to co zacina v url na /feed tak posli pres feedRoutes
-app.use('/feed', feedRoutes);
+// routa pro graphQL
+app.use('/graphql', graphqlHTTP({
+    schema: graphQlSchema,
+    rootValue: graphQlResolver,
 
-app.use('/auth', authRoutes);
-
+    // graphiql: true je development api pro testovani query v prohlizeci 
+    graphiql: true
+}));
 
 /* V MONGODB_URI definujeme i nazev databaze, tady je "restApi"
 ...cluster0-purr1.mongodb.net/restApi?retryWrites.... 
@@ -132,24 +138,6 @@ mongoose.connect(MONGODB_URI, {
     })
     .then(() => {
         console.log('<==== app listen ====>');
-        const server = app.listen(8080);
-        // socket io vraci funkci ktera ocekava jako argument server kde ma bezet
-        // websockety bezi nad http protokoloem, a node server spusti html server
-        /* na serveru  npm install --save socket.io
-        ** na FE  npm install --save socket.io-client
-        */
-        const io = require('./socket').init(server);
-
-
-        io.on('connection', socket => {
-            /* io object setne vse potrebne pro websocket 
-            ** event listener na connecton, zavola fci kde socket je klient connection
-            ** pro kazdeho klienta co se spoji zavola novou fci
-            */
-            console.log('websocket connection');
-            // console.log(socket);
-        });
-
-
+        app.listen(8080);
     })
     .catch(e => console.log(e));
