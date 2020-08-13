@@ -131,7 +131,25 @@ mongoose.connect(MONGODB_URI, {
         useFindAndModify: false
     })
     .then(() => {
-        console.log('===== app listen ====');
-        app.listen(8080);
+        console.log('<==== app listen ====>');
+        const server = app.listen(8080);
+        // socket io vraci funkci ktera ocekava jako argument server kde ma bezet
+        // websockety bezi nad http protokoloem, a node server spusti html server
+        /* na serveru  npm install --save socket.io
+        ** na FE  npm install --save socket.io-client
+        */
+        const io = require('./socket').init(server);
+
+
+        io.on('connection', socket => {
+            /* io object setne vse potrebne pro websocket 
+            ** event listener na connecton, zavola fci kde socket je klient connection
+            ** pro kazdeho klienta co se spoji zavola novou fci
+            */
+            console.log('websocket connection');
+            // console.log(socket);
+        });
+
+
     })
     .catch(e => console.log(e));

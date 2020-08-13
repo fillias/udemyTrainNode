@@ -9,6 +9,8 @@ import Loader from '../../components/Loader/Loader';
 import ErrorHandler from '../../components/ErrorHandler/ErrorHandler';
 import './Feed.css';
 
+import openSocket from 'socket.io-client';
+
 class Feed extends Component {
   state = {
     isEditing: false,
@@ -22,7 +24,18 @@ class Feed extends Component {
   };
 
   componentDidMount() {
-    fetch('URL')
+    /* websocket */
+    console.log('connecting websocket');
+    const socket = openSocket('http://192.168.56.102:8080');
+    socket.on('posts', data => {
+      console.log(data);
+      if (data.action === 'create') {
+        this.addPost(data.post);
+      }
+    });
+
+
+    fetch('url')
       .then(res => {
         if (res.status !== 200) {
           throw new Error('Failed to fetch user status.');
@@ -34,8 +47,22 @@ class Feed extends Component {
       })
       .catch(this.catchError);
 
-    this.loadPosts();
+    this.loadPosts(); 
   }
+
+  addPost = post => this.setState(prevState => {
+    const updatedPosts = [...prevState.posts];
+    if (prevState.postPage === 1) {
+      if (prevState.posts.length >= 2) {
+        updatedPosts.pop();
+      }
+      updatedPosts.unshift(post);
+    }
+    return {
+      posts: updatedPosts,
+      totalPosts: prevState.totalPosts + 1
+    };
+  });
 
   loadPosts = direction => {
     if (direction) {
@@ -62,6 +89,7 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
+        
         this.setState({
           posts: resData.posts.map(post => {
             return {

@@ -3,6 +3,8 @@ const fs = require('fs');
 
 const User = require('../models/user');
 
+const io = require('../socket');
+
 // validace formularu serverside
 const {
     validationResult
@@ -33,6 +35,7 @@ exports.getPosts = async (req, res, next) => {
         // tady resime kolik vratime polozek - pagination
 
         const posts =  await Post.find()
+            .populate('creator')
             // pokud je currentpage 1 tak neskipnu nic ( 0 * perPage )
             // pokud je currentpage jakakoliv (napr 2), 
             // skipnu vsechny ty dva itemy co byly na page 1 (1*2)
@@ -127,6 +130,8 @@ exports.createPost = (req, res, next) => {
             return user.save();
         })
         .then(result => {
+            /* posleme info vsem connected users ze byl vytvoren post  'posts' je event name, napr kanal */
+            io.getIO().emit('posts', {action: 'create', post: post})
 
             res.status(201).json({
                 message: 'post created sucessfully',
