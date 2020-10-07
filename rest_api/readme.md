@@ -19,3 +19,6 @@ pro websocket balik socket.io a na klientovi socket.io-client
 
 pro graphQL 
 npm install --save graphql express-graphql
+
+pro validace v grapghql resolvers pouzijem
+npm install --save validator

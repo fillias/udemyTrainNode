@@ -14,9 +14,10 @@ module.exports = (req, res, next) => {
     const authHeader = req.get('Authorization');
     
     if (!authHeader) {
-        const error = new Error('Not Authenticated');
-        error.statuscode = 401;
-        throw error;
+
+        req.isAuth = false;
+        return next();
+        
     }
 
     const token = authHeader.split(' ')[1];
@@ -28,21 +29,21 @@ module.exports = (req, res, next) => {
         decodedToken = jwt.verify(token, 'necoDesneTajnyho');
     } catch (err) {
         /* decoded token muze selhat */
-        err.statuscode = 500;
-        throw err;
+        req.isAuth = false;
+        return next();
     }
 
     if (!decodedToken) {
         /* technicky to nefailnulo, ale jwt verify neklaplo - spatny token */
-        const error = new Error('Not Authenticated');
-        error.statuscode = 401;
-        throw error;
+        req.isAuth = false;
+        return next();
     }
 
     /* token decoded and authenticated 
     muzeme z neho vytahnout dekodovane informace ktere jsme do nej ulozili pri loginu, potrebujem userId
     */
     req.userId = decodedToken.userId;
+    req.isAuth = true;
     next();
 
 }

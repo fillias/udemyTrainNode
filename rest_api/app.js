@@ -1,9 +1,13 @@
 const path = require('path');
+const fs = require('fs');
+
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const multer = require('multer');
+const auth = require('./middleware/auth');
+
 
 const MONGODB_URI = process.env.MONGODB_URI;
 /*  env variables jsou setnuty v app-env file
@@ -100,10 +104,41 @@ app.use((req, res, next) => {
     // Access-Control-Allow-Headers - povolime jake Headery muzou klienti pouzivat. 
     // nektere jsou v defaultu povolene, nektere se musi specifikovat
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    /* graphql nejdriv posle options request ktery se jinak zablokuje */
+    
+    if (req.method == 'OPTIONS') {
+        // vratime prazdnou odpoved s 200 a request se nedostane dal
+        // options request se tak nedostane do graphql endpoint
+        return res.sendStatus(200);
+    }
+    
 
     next();
 });
 
+app.use(auth);
+
+
+app.put('/post-image', (req, res, next) => {
+
+    if (!req.isAuth) {
+        throw new Error('unauthorized');
+    }
+
+    if (!req.file) {
+        return res.status(200).json({message: 'not file provided'});
+    }
+
+    if (req.body.oldPath) {
+        clearImage(req.body.oldPath);
+    }
+    console.log(req.file);
+    return res.status(201).json({message: 'file stored', filePath: req.file.path});
+
+});
+
+app.use(auth);
 
 // routa pro graphQL
 app.use('/graphql', graphqlHTTP({
@@ -111,7 +146,29 @@ app.use('/graphql', graphqlHTTP({
     rootValue: graphQlResolver,
 
     // graphiql: true je development api pro testovani query v prohlizeci 
-    graphiql: true
+    graphiql: true,
+    
+    /* graphql costom error handling */
+    
+    customFormatErrorFn(err) {
+       // vraci default error
+       // return err;
+
+       // err.originalError se setne pokud nekde v kodu nastane throw error
+        if (!err.originalError) {
+            return err;
+        }
+
+        // pokud neexistuje error - napriklad dnejaka syntax chyba v query, tak err.originalError neexistuje
+        const data = err.originalError.data;
+        const message = err.message || 'chyba';
+        const code = err.originalError.code || 500;
+        console.log(data);
+        return { message: message, status: code, data: data };
+
+
+    }
+    
 }));
 
 /* V MONGODB_URI definujeme i nazev databaze, tady je "restApi"
@@ -141,3 +198,9 @@ mongoose.connect(MONGODB_URI, {
         app.listen(8080);
     })
     .catch(e => console.log(e));
+
+
+const clearImage = filePath => {
+    filePath = path.join(__dirname, '..', filePath);
+    fs.unlink(filePath, err => console.log(err));
+};
